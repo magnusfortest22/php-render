@@ -3,16 +3,14 @@ FROM php:8.2-cli
 WORKDIR /app
 COPY . /app
 
-RUN apt-get update && apt-get install -y curl wget
+# install wget (for crawling) and ca-certificates
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends wget ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
-CMD php -S 0.0.0.0:80 -t /app & \
-    PHP_PID=$! && \
-    sleep 2 && \
-    wget --mirror \
-         --convert-links \
-         --adjust-extension \
-         --page-requisites \
-         --no-parent \
-         -P static_html_directory \
-         http://localhost:80/index.php && \
-    kill $PHP_PID
+# copy crawler runner script
+COPY generate-static.sh /usr/local/bin/generate-static.sh
+RUN chmod +x /usr/local/bin/generate-static.sh
+
+# container runs the script which starts php server, crawls, postprocesses and exits 0
+CMD ["bash", "/usr/local/bin/generate-static.sh"]
