@@ -1,0 +1,45 @@
+name: Generate Static PHP Site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  generate-static:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository with write permissions
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # required for committing changes
+
+      # 2. Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t php-static .
+
+      # 3. Run Docker container to generate HTML
+      - name: Generate static HTML
+        run: |
+          mkdir -p static_html_directory
+          docker run --rm -v ${{ github.workspace }}:/app php-static
+          # Move generated HTML into the static_html_directory
+          find . -name "*.html" -not -path "./static_html_directory/*" -exec mv {} static_html_directory/ \;
+
+      # 4. Commit and push changes
+      - name: Commit static HTML
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add static_html_directory
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update static HTML snapshot"
+            git push
+          fi
