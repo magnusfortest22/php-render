@@ -3,15 +3,16 @@ FROM php:8.2-cli
 WORKDIR /app
 COPY . /app
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl wget
 
 CMD php -S 0.0.0.0:80 -t /app & \
     PHP_PID=$! && \
     sleep 2 && \
-    for file in $(find /app -name '*.php'); do \
-      url="http://localhost:80/${file#/app/}"; \
-      output="${file%.php}.html"; \
-      echo "Fetching $url -> $output"; \
-      curl -s "$url" -o "$output"; \
-    done && \
+    wget --mirror \
+         --convert-links \
+         --adjust-extension \
+         --page-requisites \
+         --no-parent \
+         -P static_html_directory \
+         http://localhost:80/index.php && \
     kill $PHP_PID
