@@ -12,7 +12,7 @@
   <p>This is the homepage.</p>
   <nav>
     <a href="index.php">Home</a> 
-    <a href="about.php">About</a>
+    <a href="tobeincluded.php?id=10">About</a>
     <a href="tobeincluded.php">About</a>
   </nav>
 </body>
